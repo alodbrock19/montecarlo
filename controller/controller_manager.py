@@ -57,7 +57,8 @@ class ControllerManager:
 
         @self.app.callback(
             [Output('monte-carlo-plot', 'children'),
-             Output('monte-carlo-stats', 'children')],
+             Output('monte-carlo-stats', 'children'),
+             Output('monte-carlo-insights', 'children')],
             [Input('run-simulation-button', 'n_clicks')],
             [State('simulation-days', 'value'),
              State('simulation-count', 'value')]
@@ -65,7 +66,8 @@ class ControllerManager:
         def update_monte_carlo_simulation(n_clicks, days, simulations):
             if n_clicks is None or n_clicks == 0:
                 return self.view.monte_carlo_view.create_simulation_plot(None), \
-                       self.view.monte_carlo_view.create_statistics_table(None)
+                       self.view.monte_carlo_view.create_statistics_table(None), \
+                       self.view.monte_carlo_view.create_insights_panel(None)
             
             # Run simulation
             simulated_data = self.model.run_monte_carlo_simulation(days, simulations)
@@ -73,10 +75,12 @@ class ControllerManager:
             # Handle case when simulation fails
             if simulated_data is None:
                 return html.Div("Error: Simulation failed to run. Please check the console for details."), \
-                       html.Div("No statistics available")
+                       html.Div("No statistics available"), \
+                       html.Div("No insights available")
             
             # Create visualization components
             plot = self.view.monte_carlo_view.create_simulation_plot(simulated_data)
             stats = self.view.monte_carlo_view.create_statistics_table(simulated_data['statistics'])
+            insights = self.view.monte_carlo_view.create_insights_panel(simulated_data)
             
-            return plot, stats 
+            return plot, stats, insights 

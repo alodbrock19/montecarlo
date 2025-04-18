@@ -112,7 +112,10 @@ class ViewManager:
             html.Div([
                 html.Div(id='monte-carlo-plot', style={'width': '70%', 'display': 'inline-block'}),
                 html.Div(id='monte-carlo-stats', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
-            ], style={'marginTop': 20})
+            ], style={'marginTop': 20}),
+            
+            # Insights panel
+            html.Div(id='monte-carlo-insights', style={'marginTop': 20})
         ], style={'marginTop': 30, 'padding': 20, 'backgroundColor': '#f8f9fa', 'borderRadius': 5})
 
     def create_price_figure(self, data, moving_averages):

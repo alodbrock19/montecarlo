@@ -89,4 +89,79 @@ class MonteCarloView:
                 html.Tr([html.Td("95th Percentile"), html.Td(f"${stats['percentile_95']:.2f}")]),
                 html.Tr([html.Td("5th Percentile"), html.Td(f"${stats['percentile_5']:.2f}")])
             ], style={'width': '100%', 'border': '1px solid black'})
-        ]) 
+        ])
+        
+    @staticmethod
+    def create_insights_panel(simulated_data):
+        """Create a panel with practical insights from the simulation"""
+        if simulated_data is None:
+            return html.Div("No simulation data available for insights")
+            
+        simulated_prices = simulated_data['simulated_prices']
+        last_price = simulated_data['last_price']
+        stats = simulated_data['statistics']
+        
+        # Calculate additional metrics
+        final_prices = simulated_prices[-1]
+        price_increase_prob = np.mean(final_prices > last_price) * 100
+        price_decrease_prob = np.mean(final_prices < last_price) * 100
+        price_double_prob = np.mean(final_prices > last_price * 2) * 100
+        price_halve_prob = np.mean(final_prices < last_price * 0.5) * 100
+        
+        # Calculate expected return
+        expected_return = ((stats['mean'] / last_price) - 1) * 100
+        
+        # Calculate risk metrics
+        downside_risk = ((last_price - stats['percentile_5']) / last_price) * 100
+        upside_potential = ((stats['percentile_95'] - last_price) / last_price) * 100
+        
+        return html.Div([
+            html.H3("Practical Insights", style={'textAlign': 'center', 'marginTop': 20}),
+            
+            html.Div([
+                html.H4("Probability Analysis", style={'color': '#2c3e50'}),
+                html.P([
+                    html.Strong(f"Probability of price increase: "), 
+                    f"{price_increase_prob:.1f}%"
+                ]),
+                html.P([
+                    html.Strong(f"Probability of price decrease: "), 
+                    f"{price_decrease_prob:.1f}%"
+                ]),
+                html.P([
+                    html.Strong(f"Probability of price doubling: "), 
+                    f"{price_double_prob:.1f}%"
+                ]),
+                html.P([
+                    html.Strong(f"Probability of price halving: "), 
+                    f"{price_halve_prob:.1f}%"
+                ])
+            ], style={'marginBottom': 20}),
+            
+            html.Div([
+                html.H4("Risk-Return Profile", style={'color': '#2c3e50'}),
+                html.P([
+                    html.Strong(f"Expected return: "), 
+                    f"{expected_return:.1f}%"
+                ]),
+                html.P([
+                    html.Strong(f"Downside risk: "), 
+                    f"{downside_risk:.1f}%"
+                ]),
+                html.P([
+                    html.Strong(f"Upside potential: "), 
+                    f"{upside_potential:.1f}%"
+                ])
+            ], style={'marginBottom': 20}),
+            
+            html.Div([
+                html.H4("Key Conclusions", style={'color': '#2c3e50'}),
+                html.Ul([
+                    html.Li("The simulation provides a range of possible future prices based on historical volatility and returns."),
+                    html.Li(f"The median projected price is ${stats['median']:.2f}, which represents the most likely outcome."),
+                    html.Li(f"There is a 90% probability that the price will fall between ${stats['percentile_5']:.2f} and ${stats['percentile_95']:.2f}."),
+                    html.Li(f"The expected return of {expected_return:.1f}% represents the average outcome across all simulations."),
+                    html.Li("This simulation assumes that future price movements will follow the same statistical properties as historical data.")
+                ])
+            ])
+        ], style={'padding': 20, 'backgroundColor': '#f8f9fa', 'borderRadius': 5, 'marginTop': 20}) 
