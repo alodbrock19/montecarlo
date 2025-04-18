@@ -1,10 +1,12 @@
 from dash import html, dcc
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+from .monte_carlo_view import MonteCarloView
 
 class ViewManager:
     def __init__(self):
         self.layout = None
+        self.monte_carlo_view = MonteCarloView()
 
     def create_layout(self):
         """Create the main layout of the dashboard"""
@@ -22,7 +24,8 @@ class ViewManager:
                 children=[
                     self._create_price_chart(),
                     self._create_secondary_charts(),
-                    self._create_stats_panel()
+                    self._create_stats_panel(),
+                    self._create_monte_carlo_section()
                 ]
             )
         ])
@@ -72,6 +75,45 @@ class ViewManager:
             html.H3('Key Statistics', style={'textAlign': 'center'}),
             html.Div(id='stats-panel', style={'textAlign': 'center'})
         ], style={'marginTop': 20, 'padding': 20, 'backgroundColor': '#f8f9fa', 'borderRadius': 5})
+
+    def _create_monte_carlo_section(self):
+        """Create the Monte Carlo simulation section"""
+        return html.Div([
+            html.H2('Monte Carlo Simulation', 
+                    style={'textAlign': 'center', 'color': '#2c3e50', 'marginTop': 30, 'marginBottom': 20}),
+            
+            # Simulation controls
+            html.Div([
+                html.Label('Number of Days:', style={'marginRight': 10}),
+                dcc.Input(
+                    id='simulation-days',
+                    type='number',
+                    value=252,
+                    min=1,
+                    max=1000,
+                    style={'width': 100, 'marginRight': 20}
+                ),
+                
+                html.Label('Number of Simulations:', style={'marginRight': 10}),
+                dcc.Input(
+                    id='simulation-count',
+                    type='number',
+                    value=1000,
+                    min=100,
+                    max=10000,
+                    style={'width': 100, 'marginRight': 20}
+                ),
+                
+                html.Button('Run Simulation', id='run-simulation-button', n_clicks=0,
+                           style={'padding': '5px 10px'})
+            ], style={'marginBottom': 20, 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'}),
+            
+            # Simulation results
+            html.Div([
+                html.Div(id='monte-carlo-plot', style={'width': '70%', 'display': 'inline-block'}),
+                html.Div(id='monte-carlo-stats', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
+            ], style={'marginTop': 20})
+        ], style={'marginTop': 30, 'padding': 20, 'backgroundColor': '#f8f9fa', 'borderRadius': 5})
 
     def create_price_figure(self, data, moving_averages):
         """Create the price chart figure"""

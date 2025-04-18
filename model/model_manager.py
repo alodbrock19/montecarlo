@@ -2,12 +2,14 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from .monte_carlo_model import MonteCarloSimulation
 
 class ModelManager:
     def __init__(self):
         self.data = None
         self.start_date = None
         self.end_date = None
+        self.monte_carlo = MonteCarloSimulation()
         # Load initial data
         self.fetch_data()  # This will use default dates (last 5 years)
 
@@ -73,10 +75,14 @@ class ModelManager:
             return None
         
         try:
+            # Handle MultiIndex columns if present
+            if isinstance(self.data.columns, pd.MultiIndex):
+                self.data.columns = self.data.columns.get_level_values(0)
+                
             stats = {
-                'current_price': self.data['Close'][-1],
-                'total_return': (self.data['Close'][-1] / self.data['Close'][0] - 1) * 100,
-                'annual_return': ((1 + (self.data['Close'][-1] / self.data['Close'][0] - 1)) ** (252/len(self.data)) - 1) * 100,
+                'current_price': self.data['Close'].iloc[-1],
+                'total_return': (self.data['Close'].iloc[-1] / self.data['Close'].iloc[0] - 1) * 100,
+                'annual_return': ((1 + (self.data['Close'].iloc[-1] / self.data['Close'].iloc[0] - 1)) ** (252/len(self.data)) - 1) * 100,
                 'annual_volatility': self.data['Daily_Return'].std() * np.sqrt(252) * 100
             }
             
@@ -94,10 +100,53 @@ class ModelManager:
             return None
         
         try:
+            # Handle MultiIndex columns if present
+            if isinstance(self.data.columns, pd.MultiIndex):
+                self.data.columns = self.data.columns.get_level_values(0)
+                
             return {
                 'ma20': self.data['Close'].rolling(window=20).mean(),
                 'ma50': self.data['Close'].rolling(window=50).mean()
             }
         except Exception as e:
             print(f"Error calculating moving averages: {e}")
+            return None
+
+    def run_monte_carlo_simulation(self, days=252, simulations=1000):
+        """Run Monte Carlo simulation for S&P 500"""
+        try:
+            # Update simulation parameters
+            self.monte_carlo.days = days
+            self.monte_carlo.simulations = simulations
+            
+            # Run simulation
+            simulated_prices = self.monte_carlo.simulate()
+            
+            if simulated_prices is None:
+                print("Monte Carlo simulation failed to generate prices")
+                return None
+            
+            # Get statistics
+            stats = self.monte_carlo.get_statistics(simulated_prices)
+            
+            if stats is None:
+                print("Failed to calculate simulation statistics")
+                return None
+            
+            if self.data is None or self.data.empty:
+                print("No historical data available")
+                return None
+            
+            # Handle MultiIndex columns if present
+            if isinstance(self.data.columns, pd.MultiIndex):
+                self.data.columns = self.data.columns.get_level_values(0)
+                
+            return {
+                'simulated_prices': simulated_prices,
+                'statistics': stats,
+                'last_price': self.data['Close'].iloc[-1]
+            }
+            
+        except Exception as e:
+            print(f"Error running Monte Carlo simulation: {e}")
             return None 
